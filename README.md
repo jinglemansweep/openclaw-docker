@@ -120,21 +120,101 @@ const { chromium } = require('playwright');
 
 ## Usage with Docker Compose
 
-```yaml
-version: '3'
-services:
-  openclaw:
-    image: openclaw-extended
-    volumes:
-      - ./workspace:/workspace
-    ports:
-      - "8080:8080"
+The compose file automatically runs as your current user to avoid permission issues with mounted volumes.
+
+### Setup
+
+Create a `.env` file from the example:
+
+```bash
+# Copy example
+cp .env.example .env
+
+# Edit .env and add your Discord token
+nano .env  # or vim, code, etc.
 ```
+
+**Important**: The `.env` file contains secrets and is git-ignored. Never commit it!
+
+Your `.env` file should look like:
+
+```bash
+# User/Group (auto-detected if not set)
+UID=1000
+GID=1000
+
+# Discord Bot Token (required for OpenClaw)
+DISCORD_TOKEN=your_discord_bot_token_here
+```
+
+Get your Discord token from: https://discord.com/developers/applications
+
+### Usage
+
+```bash
+# Build and run (or pull if image exists)
+docker-compose up -d
+
+# Enter the container
+docker-compose exec openclaw bash
+
+# View logs
+docker-compose logs -f
+
+# Stop
+docker-compose down
+```
+
+### Data Directories
+
+The compose file creates two volume mounts in `./data/`:
+
+- `./data/workspace` - Your working files (mapped to `/home/node/.openclaw/workspace`)
+- `./data/state` - OpenClaw configuration and state (mapped to `/home/node/.openclaw`)
+
+### Configuration
+
+OpenClaw reads the `DISCORD_TOKEN` environment variable automatically. You can:
+
+**Option 1**: Use `.env` file (recommended for local development)
+```bash
+echo "DISCORD_TOKEN=your_token_here" >> .env
+docker-compose up -d
+```
+
+**Option 2**: Export environment variable
+```bash
+export DISCORD_TOKEN=your_token_here
+docker-compose up -d
+```
+
+**Option 3**: Inline with docker-compose
+```bash
+DISCORD_TOKEN=your_token_here docker-compose up -d
+```
+
+If OpenClaw also reads from `data/state/openclaw.json`, the environment variable will take precedence.
 
 ## GitHub Container Registry
 
 This image is automatically built and published to GitHub Container Registry on push to main or on tagged releases.
 
+### Pull Pre-built Image
+
 ```bash
+# Pull latest
 docker pull ghcr.io/jinglemansweep/openclaw-docker:latest
+
+# Run directly
+docker run -it --rm ghcr.io/jinglemansweep/openclaw-docker:latest
+
+# Or use Docker Compose (see above)
+docker-compose --profile ghcr up -d
 ```
+
+### Available Tags
+
+- `latest` - Latest build from main branch
+- `main` - Alias for latest
+- `sha-<commit>` - Specific commit builds
+- `v*` - Version tags (e.g., `v1.0.0`, `v1.0`)

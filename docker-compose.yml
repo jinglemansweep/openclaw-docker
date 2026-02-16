@@ -1,23 +1,31 @@
-version: '3.8'
-
 services:
   openclaw:
-    build: .
-    image: openclaw-extended:latest
-    container_name: openclaw-dev
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: ghcr.io/jinglemansweep/openclaw-docker:latest
+    restart: unless-stopped
+    container_name: openclaw
+    user: "${UID:-1000}:${GID:-1000}"
+    command: [
+      "node", "dist/index.js", "gateway",
+      "--bind", "lan", "--port", "18789"
+    ]
     stdin_open: true
     tty: true
+    ports:
+      - "18789:18789"
+      - "18792:18792"
     volumes:
-      - ./workspace:/workspace
-      - openclaw-home:/root
+      - ${PWD}/data/state:/home/node/.openclaw
+      - ${PWD}/data/workspace:/home/node/.openclaw/workspace
+      # - /tmp/.X11-unix:/tmp/.X11-unix:ro
+    env_file:
+      - .env
     environment:
       - DISPLAY=${DISPLAY:-:0}
-    network_mode: host
-    # Uncomment for X11 forwarding on Linux
-    # volumes:
-    #   - /tmp/.X11-unix:/tmp/.X11-unix:ro
-    restart: unless-stopped
+      - OPENCLAW_HOME=/home/node/.openclaw/workspace
+      - OPENCLAW_STATE_DIR=/home/node/.openclaw
+      - HOME=/home/node
 
-volumes:
-  openclaw-home:
-    driver: local
+  

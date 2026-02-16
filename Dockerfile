@@ -48,10 +48,17 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     # Misc utilities
     bc jq ripgrep fd-find silversearcher-ag fzf \
     # Chromium and dependencies for Playwright
-    chromium chromium-driver fonts-liberation fonts-noto-color-emoji \
+    chromium chromium-driver chromium-sandbox fonts-liberation fonts-noto-color-emoji \
     fonts-wqy-zenhei libatk-bridge2.0-0 libatk1.0-0 libcups2 \
-    libdrm2 libgbm1 libgtk-3-0 libnspr4 libnss3 libxkbcommon0 \
-    libxshmfence1 xdg-utils \
+    libdrm2 libgbm1 libgtk-3-0 libgtk-4-1 libnspr4 libnss3 \
+    libxkbcommon0 libxshmfence1 xdg-utils \
+    # GStreamer and WebKit dependencies
+    libgstreamer1.0-0 libgstreamer-plugins-base1.0-0 \
+    libgstreamer-plugins-bad1.0-0 gstreamer1.0-plugins-base \
+    gstreamer1.0-plugins-good gstreamer1.0-plugins-bad \
+    gstreamer1.0-libav libgraphene-1.0-0 libavif15 \
+    libharfbuzz-icu0 libmanette-0.2-0 libenchant-2-2 libhyphen0 \
+    libsecret-1-0 libwoff1 libgles2 \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Node.js from NodeSource
@@ -72,20 +79,7 @@ RUN pip3 install --no-cache-dir --break-system-packages \
 RUN playwright install chromium firefox webkit
 
 # Set up Chromium as default for Playwright
-ENV PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium-browser
-
-# Create a workspace directory
-RUN mkdir -p /openclaw/workspace /openclaw/state
-
-# Set OpenClaw home directory for the node user
-ENV OPENCLAW_HOME=/openclaw/workspace
-ENV OPENCLAW_STATE_DIR=/openclaw/state
-
-# Fix permissions
-RUN chown -R node:node /openclaw/workspace /openclaw/state
+ENV PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium
 
 # Switch back to a non-root user
 USER node
-
-# Keep container running by default
-CMD ["/bin/bash"]
