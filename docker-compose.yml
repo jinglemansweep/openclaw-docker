@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  openclaw:
+    build: .
+    image: openclaw-extended:latest
+    container_name: openclaw-dev
+    stdin_open: true
+    tty: true
+    volumes:
+      - ./workspace:/workspace
+      - openclaw-home:/root
+    environment:
+      - DISPLAY=${DISPLAY:-:0}
+    network_mode: host
+    # Uncomment for X11 forwarding on Linux
+    # volumes:
+    #   - /tmp/.X11-unix:/tmp/.X11-unix:ro
+    restart: unless-stopped
+
+volumes:
+  openclaw-home:
+    driver: local
