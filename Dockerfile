@@ -1,18 +1,17 @@
-FROM alpine/openclaw:latest
+FROM fourplayers/openclaw:latest
 
 LABEL maintainer="Louis King <jinglemansweep@gmail.com>"
 LABEL description="Extended OpenClaw image (Debian-based) with development tools, Playwright, and Chromium"
-
-# Switch to root for package installation
-USER root
 
 # Set environment variables
 ENV DEBIAN_FRONTEND=noninteractive \
     LANG=C.UTF-8 \
     LC_ALL=C.UTF-8 \
     PYTHONUNBUFFERED=1 \
-    PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=0 \
-    PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+    HOME=/home/node \
+    PLAYWRIGHT_BROWSERS_PATH=/ms-playwright \
+    OPENCLAW_HOME=/home/node/.openclaw \
+    OPENCLAW_STATE_DIR=/home/node/.openclaw
 
 # Update and install common tools and packages
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -47,8 +46,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     man-db manpages manpages-dev \
     # Misc utilities
     bc jq ripgrep fd-find silversearcher-ag fzf \
-    # Chromium and dependencies for Playwright
-    chromium chromium-driver chromium-sandbox fonts-liberation fonts-noto-color-emoji \
+    # Display and browser dependencies for Playwright
+    fonts-liberation fonts-noto-color-emoji \
     fonts-wqy-zenhei libatk-bridge2.0-0 libatk1.0-0 libcups2 \
     libdrm2 libgbm1 libgtk-3-0 libgtk-4-1 libnspr4 libnss3 \
     libxkbcommon0 libxshmfence1 xdg-utils \
@@ -66,20 +65,34 @@ RUN curl -fsSL https://deb.nodesource.com/setup_lts.x | bash - && \
     apt-get install -y nodejs && \
     rm -rf /var/lib/apt/lists/*
 
-# Create symbolic links for fd (naming conflict in Debian)
-RUN ln -s $(which fdfind) /usr/local/bin/fd 2>/dev/null || true
-
 # Install modern CLI and Python tools via pip
 RUN pip3 install --no-cache-dir --break-system-packages \
-    httpie glances yt-dlp speedtest-cli python-dotenv requests \
-    playwright \
-    && rm -rf ~/.cache/pip
+    httpie glances yt-dlp python-dotenv requests && \
+    rm -rf ~/.cache/pip
 
-# Install Playwright browsers (Chromium, Firefox, WebKit)
-RUN playwright install chromium firefox webkit
+# Install Playwright's bundled Chromium to a system-wide path
+RUN mkdir -p /ms-playwright && \
+    npm install -g playwright && \
+    playwright install chromium && \
+    chmod -R 755 /ms-playwright
 
-# Set up Chromium as default for Playwright
-ENV PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium
+# Install GitHub CLI
+RUN mkdir -p -m 755 /etc/apt/keyrings && \
+	wget -nv -O /tmp/github-keyring.gpg https://cli.github.com/packages/githubcli-archive-keyring.gpg && \
+	cat /tmp/github-keyring.gpg | tee /etc/apt/keyrings/githubcli-archive-keyring.gpg > /dev/null && \
+	chmod go+r /etc/apt/keyrings/githubcli-archive-keyring.gpg && \
+	mkdir -p -m 755 /etc/apt/sources.list.d && \
+	echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | tee /etc/apt/sources.list.d/github-cli.list > /dev/null && \
+	apt-get update && \
+	apt-get install -y gh
 
-# Switch back to a non-root user
-USER node
+# Install ClawHub skills
+RUN cd ${OPENCLAW_STATE_DIR} && \
+    npx clawhub@latest install github && \
+    npx clawhub@latest install gog
+
+RUN chown -R node:node /home/node/.config
+
+# Working directory and user
+WORKDIR ${OPENCLAW_STATE_DIR}
+

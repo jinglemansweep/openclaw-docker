@@ -6,26 +6,18 @@ services:
     image: ghcr.io/jinglemansweep/openclaw-docker:latest
     restart: unless-stopped
     container_name: openclaw
-    user: "${UID:-1000}:${GID:-1000}"
-    command: [
-      "node", "dist/index.js", "gateway",
-      "--bind", "lan", "--port", "18789"
-    ]
-    stdin_open: true
-    tty: true
+    init: true
     ports:
       - "18789:18789"
-      - "18792:18792"
+      - "18790:18790"
     volumes:
-      - ${PWD}/data/state:/home/node/.openclaw
-      - ${PWD}/data/workspace:/home/node/.openclaw/workspace
-      # - /tmp/.X11-unix:/tmp/.X11-unix:ro
+      - openclaw_state:/home/node/.openclaw
+      - ${OPENCLAW_WORKSPACE_DIR}:/workspace
     env_file:
-      - .env
+      - .env.secrets
     environment:
-      - DISPLAY=${DISPLAY:-:0}
-      - OPENCLAW_HOME=/home/node/.openclaw/workspace
-      - OPENCLAW_STATE_DIR=/home/node/.openclaw
-      - HOME=/home/node
-
-  
+      - OPENCLAW_GATEWAY_TOKEN=abc123
+      
+volumes:
+  openclaw_state:
+    driver: local
