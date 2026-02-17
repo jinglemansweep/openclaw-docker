@@ -12,7 +12,9 @@ services:
       - "18790:18790"
     volumes:
       - openclaw_state:/home/node/.openclaw
-      - ${OPENCLAW_WORKSPACE_DIR}:/workspace
+      - ${OPENCLAW_WORKSPACE_DIR}:/home/node/.openclaw/workspace
+    env_file:
+      - .env
     environment:
       - OPENCLAW_GATEWAY_TOKEN=abc123
       
