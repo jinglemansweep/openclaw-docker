@@ -5,6 +5,10 @@ on:
     branches: [main]
     tags:
       - "v*"
+    path:
+      - "Dockerfile"
+      - "docker-compose.yml"
+      - ".env.example"
 
 env:
   REGISTRY: ghcr.io
