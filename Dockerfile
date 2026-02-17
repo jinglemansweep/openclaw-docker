@@ -1,51 +1,42 @@
-FROM fourplayers/openclaw:latest
+ARG base_image=fourplayers/openclaw
+ARG base_image_tag=latest
+
+FROM ${base_image}:${base_image_tag}
 
 LABEL maintainer="Louis King <jinglemansweep@gmail.com>"
-LABEL description="Extended OpenClaw image (Debian-based) with development tools, Playwright, and Chromium"
+LABEL description="Extended OpenClaw image with useful additional tools and skills pre-installed"
 
 # Set environment variables
 ENV DEBIAN_FRONTEND=noninteractive \
     LANG=C.UTF-8 \
     LC_ALL=C.UTF-8 \
-    PYTHONUNBUFFERED=1 \
-    HOME=/home/node \
-    PLAYWRIGHT_BROWSERS_PATH=/ms-playwright \
-    OPENCLAW_HOME=/home/node/.openclaw \
-    OPENCLAW_STATE_DIR=/home/node/.openclaw
+    PYTHONUNBUFFERED=1
 
 # Update and install common tools and packages
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    # Build essentials
-    build-essential cmake ninja-build pkg-config autoconf automake \
-    libtool \
-    # Version control
-    git git-lfs subversion mercurial \
-    # Text editors
-    vim nano emacs-nox \
+    # Essentials
+    build-essential ca-certificates cmake ninja-build \
+    pkg-config autoconf automake libtool git git-lfs subversion \
+    vim nano gnupg lsb-release \
     # Shell utilities
-    bash-completion zsh fish tmux screen \
-    # Network tools
-    curl wget netcat-openbsd telnet nmap iputils-ping iproute2 \
-    dnsutils traceroute \
+    bash-completion tmux screen curl wget netcat-openbsd telnet \
+    nmap iputils-ping iproute2 dnsutils traceroute \
     # System utilities
-    htop iotop ncdu tree file strace ltrace lsof psmisc procps \
-    sysstat \
+    htop iotop ncdu tree file strace ltrace lsof \
+    psmisc procps sysstat \
     # Compression tools
     zip unzip bzip2 xz-utils p7zip-full \
     # Development libraries
     libssl-dev libcurl4-openssl-dev zlib1g-dev libbz2-dev \
     libreadline-dev libsqlite3-dev libffi-dev liblzma-dev \
     # Programming languages and tools
-    python3 python3-pip python3-venv python3-dev pipx ca-certificates \
-    gnupg \
-    # Multimedia
-    ffmpeg \
+    python3 python3-pip python3-venv python3-dev pipx \
     # Debugging tools
     gdb gdbserver valgrind \
     # Documentation and help
     man-db manpages manpages-dev \
     # Misc utilities
-    bc jq ripgrep fd-find silversearcher-ag fzf \
+    bc jq ripgrep fd-find ffmpeg silversearcher-ag fzf \
     # Display and browser dependencies for Playwright
     fonts-liberation fonts-noto-color-emoji \
     fonts-wqy-zenhei libatk-bridge2.0-0 libatk1.0-0 libcups2 \
@@ -65,11 +56,11 @@ RUN curl -fsSL https://deb.nodesource.com/setup_lts.x | bash - && \
     apt-get install -y nodejs && \
     rm -rf /var/lib/apt/lists/*
 
-# Install modern CLI and Python tools via pip
-RUN pip3 install --no-cache-dir --break-system-packages \
-    httpie glances yt-dlp python-dotenv requests && \
-    rm -rf ~/.cache/pip
-
+# Install Python tools (pipx)
+RUN pipx install httpie && \
+    pipx install glances && \
+    pipx install yt-dlp
+        
 # Install Playwright's bundled Chromium to a system-wide path
 RUN mkdir -p /ms-playwright && \
     npm install -g playwright && \
@@ -91,6 +82,13 @@ RUN cd ${OPENCLAW_STATE_DIR} && \
     npx clawhub@latest install github && \
     npx clawhub@latest install gog
 
+# Set environment variables
+ENV PATH=${PATH}:/home/node/.local/bin \
+    PLAYWRIGHT_BROWSERS_PATH=/ms-playwright \
+    OPENCLAW_HOME=/home/node/.openclaw \
+    OPENCLAW_STATE_DIR=/home/node/.openclaw
+
+# Fix permissions
 RUN chown -R node:node /home/node/.config
 
 # Working directory and user

@@ -13,8 +13,6 @@ services:
     volumes:
       - openclaw_state:/home/node/.openclaw
       - ${OPENCLAW_WORKSPACE_DIR}:/workspace
-    env_file:
-      - .env.secrets
     environment:
       - OPENCLAW_GATEWAY_TOKEN=abc123
       
