@@ -12,6 +12,7 @@ services:
       - "18790:18790"
     volumes:
       - openclaw_state:/home/node/.openclaw
+      - openclaw_skills:/home/node/.openclaw/skills
       - ${OPENCLAW_WORKSPACE_DIR}:/home/node/.openclaw/workspace
     env_file:
       - .env
@@ -21,3 +22,6 @@ services:
 volumes:
   openclaw_state:
     driver: local
+  openclaw_skills:
+    driver: local
+

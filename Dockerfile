@@ -77,16 +77,17 @@ RUN mkdir -p -m 755 /etc/apt/keyrings && \
 	apt-get update && \
 	apt-get install -y gh
 
-# Install ClawHub skills
-RUN cd ${OPENCLAW_STATE_DIR} && \
-    npx clawhub@latest install github && \
-    npx clawhub@latest install gog
-
 # Set environment variables
 ENV PATH=${PATH}:/home/node/.local/bin \
     PLAYWRIGHT_BROWSERS_PATH=/ms-playwright \
     OPENCLAW_HOME=/home/node/.openclaw \
     OPENCLAW_STATE_DIR=/home/node/.openclaw
+
+# Install ClawHub skills
+RUN mkdir -p /build/ext && cd /build/ext && \
+    npx clawhub@latest install github && \
+    npx clawhub@latest install gog && \
+    npx clawhub@latest install topic-monitor
 
 # Fix permissions
 RUN chown -R node:node /home/node/.config
