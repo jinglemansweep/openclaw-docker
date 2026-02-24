@@ -90,7 +90,7 @@ RUN mkdir -p /build/ext && cd /build/ext && \
     npx clawhub@latest install topic-monitor
 
 # Fix permissions
-RUN chown -R node:node /home/node/.config
+RUN chown -R node:node /home/node/.config /build/ext /ms-playwright
 
 # Working directory and user
 WORKDIR ${OPENCLAW_STATE_DIR}
